@@ -2,6 +2,7 @@ from time import sleep
 from classes import CLASSES
 import random
 from pymongo import MongoClient
+from utils import exibir_ficha
 
 def conectar():
     client = MongoClient("mongodb://localhost:27017/")
@@ -42,9 +43,7 @@ if MontOuSort == '1':
             'precisão': random.randint(*atributos['precisão'])
         }
 
-        print('\n===FICHA DE PERSONAGEM===')
-        for chave, valor in personagem.items():
-            print(f'{chave}: {valor}')
+        exibir_ficha(personagem)
 
 elif MontOuSort == '2':
     
@@ -65,12 +64,10 @@ elif MontOuSort == '2':
         'precisão': random.randint(*atributos['precisão'])
     }
 
-    print('\n===FICHA DE PERSONAGEM===')
-    for chave, valor in personagem.items():
-        print(f'{chave}: {valor}')
+    exibir_ficha(personagem)
 
 db = conectar()
 personagens = db["Personagens"]
-personagens.insert_one(personagem)
+#personagens.insert_one(personagem)
 
 print("Personagem adicionado ao BD")
