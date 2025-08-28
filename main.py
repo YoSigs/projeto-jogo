@@ -2,7 +2,8 @@ from time import sleep
 from classes import CLASSES
 import random
 from pymongo import MongoClient
-from utils import exibir_ficha
+from utils import exibir_ficha, mostra_vilao
+from viloes import VILOES
 
 def conectar():
     client = MongoClient("mongodb://localhost:27017/")
@@ -66,8 +67,20 @@ elif MontOuSort == '2':
 
     exibir_ficha(personagem)
 
+atributos_vil = VILOES['vilao_1']
+vilao_teste = {
+    'nome': 'vilao_1',
+    'vida': random.randint(*atributos_vil['vida']),
+    'força': random.randint(*atributos_vil['força']),
+    'defesa': random.randint(*atributos_vil['defesa']),
+    'velocidade': random.randint(*atributos_vil['velocidade']),
+    'precisão': random.randint(*atributos_vil['precisão'])
+}
+
+mostra_vilao(vilao_teste)
+
 db = conectar()
 personagens = db["Personagens"]
 #personagens.insert_one(personagem)
 
-print("Personagem adicionado ao BD")
+#print("Personagem adicionado ao BD")
