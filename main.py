@@ -1,86 +1,92 @@
-from time import sleep
-from classes import CLASSES
-import random
-from pymongo import MongoClient
-from utils import exibir_ficha, mostra_vilao
-from viloes import VILOES
+from battle import Battle
+from classes import choose_class, random_class
+from utils import show_character, show_villain, run_sql_file, connect, save_villain, get_existing_character
+from villains import random_villain
 
-def conectar():
-    client = MongoClient("mongodb://localhost:27017/")
-    db = client["Jogo"]
-    return db
 
-print("="*30)
-print(str("SEJA BEM VINDO").center(30))
-print("="*30)
 
-print("Para começar o jogo você tem duas opções")
-MontOuSort = input('[1] Montar uma classe\n[2] Sortear uma classe\nEscolha uma: ')
-print()
-#Montar classe
-if MontOuSort == '1':
-    Classe = input('[1] Mago\n[2] Cavaleiro\n[3] Druida\n[4] Fada\n[5] Barbaro\nEscolha uma classe:')
-    
-    classes_opcoes = {
-        '1': 'Mago',
-        '2': 'Cavaleiro',
-        '3': 'Druida',
-        '4': 'Fada',
-        '5': 'Barbaro'
-    }
+def save_character(character):
+    conn = connect()
+    cursor = conn.cursor()
 
-    classe_escolhida = classes_opcoes.get(Classe)
+    sql = """
+        INSERT INTO characters (nickname, class, life, strength, defense, speed, accuracy)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+    values = (
+        character["nickname"],
+        character["class"],
+        character["life"],
+        character["strength"],
+        character["defense"],
+        character["speed"],
+        character["accuracy"]
+    )
 
-    if classe_escolhida:
-        atributos = CLASSES[classe_escolhida]
+    cursor.execute(sql, values)
+    conn.commit()
 
-        personagem = {
-            'nome': input('Digite seu nome: '),
-            'classe': classe_escolhida,
-            'vida': random.randint(*atributos['vida']),
-            'força': random.randint(*atributos['força']),
-            'defesa': random.randint(*atributos['defesa']),
-            'velocidade': random.randint(*atributos['velocidade']),
-            'precisão': random.randint(*atributos['precisão'])
+    character_id = cursor.lastrowid
+    cursor.close()
+    conn.close()
+
+    return character_id
+
+def main():
+    conn = connect()
+    cursor = conn.cursor()
+
+    run_sql_file("sql/criaTabela.sql")
+    run_sql_file("sql/createTableVillain.sql")
+
+    print("=".center(40, "="))
+    print(" SEJA BEM-VINDO AO RPG ".center(40, "="))
+    print("=".center(40, "="))
+
+    nickname = input("\nDigite seu nickname: ")
+
+    existing = get_existing_character(cursor, nickname)
+
+    if existing:
+        print(f'Olá {nickname}, seu personagem foi encontrado!\n')
+        character = {
+            "id": existing[0],
+            "nickname": existing[1],
+            "life": existing[3],
+            "speed": existing[6],
+            "strength": existing[4],
+            "defense": existing[5],
+            "accuracy": existing[7],
+            "class": existing[2]
         }
+        show_character(character)
+    else:
 
-        exibir_ficha(personagem)
+        print("\nPara começar o jogo você tem duas opções:")
+        escolha = input("[1] Montar sua classe | [2] Sortear uma classe \nEscolha: ")
 
-elif MontOuSort == '2':
-    
-    classes_opcoes = ['Mago', 'Cavaleiro', 'Druida', 'Fada', 'Barbaro']
+        if escolha == '1':
+            character = choose_class()
+        else:
+            character = random_class()
 
-    classe_sorteada = random.choice(classes_opcoes)
+        character["nickname"] = nickname
 
-    
-    atributos = CLASSES[classe_sorteada]
 
-    personagem = {
-        'nome': input('Digite seu nome: '),
-        'classe': classe_sorteada,
-        'vida': random.randint(*atributos['vida']),
-        'força': random.randint(*atributos['força']),
-        'defesa': random.randint(*atributos['defesa']),
-        'velocidade': random.randint(*atributos['velocidade']),
-        'precisão': random.randint(*atributos['precisão'])
-    }
+        show_character(character)
 
-    exibir_ficha(personagem)
+        save_character(character)
 
-atributos_vil = VILOES['vilao_1']
-vilao_teste = {
-    'nome': 'vilao_1',
-    'vida': random.randint(*atributos_vil['vida']),
-    'força': random.randint(*atributos_vil['força']),
-    'defesa': random.randint(*atributos_vil['defesa']),
-    'velocidade': random.randint(*atributos_vil['velocidade']),
-    'precisão': random.randint(*atributos_vil['precisão'])
-}
+    villain = random_villain()
+    save_villain(villain)
 
-mostra_vilao(vilao_teste)
+    b = Battle()
 
-db = conectar()
-personagens = db["Personagens"]
-#personagens.insert_one(personagem)
+    character = b.get_character()
+    villain = b.get_villain()
 
-#print("Personagem adicionado ao BD")
+    b.start_battle()
+
+if __name__ == "__main__":
+    run_sql_file("sql/criaBanco.sql")
+    main()

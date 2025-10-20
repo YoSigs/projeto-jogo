@@ -1,9 +1,11 @@
-from random import randint
+from utils import connect
 
-inimigo = {}
+conn = connect()
+cursor = conn.cursor()
+cursor.execute("SELECT DATABASE();")
+print("Banco conectado:", cursor.fetchone())
+cursor.execute("SELECT * FROM villains;")
+print(cursor.fetchall())
+cursor.close()
+conn.close()
 
-inimigo['Vida'] =  randint(100, 500)
-inimigo['Força'] = randint(30, 50)
-inimigo['Defesa'] = randint(30, 70)
-inimigo['Velocidade'] = 100
-inimigo['Precisão'] = randint(40, 80)
